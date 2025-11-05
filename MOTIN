@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MM PARSON</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap');
+
+    /* Base */
+    *{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;scroll-behavior:smooth}
+    html,body{height:100%}
+    body{
+      background:#000;
+      color:#00ffcc;
+      overflow-x:hidden;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+
+    /* Canvas sits behind content */
+    canvas{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;background:#000}
+
+    /* Top nav */
+    nav{
+      position:sticky;top:0;z-index:120;
+      background:linear-gradient(180deg, rgba(0,8,6,0.45), rgba(0,10,8,0.6));
+      border-bottom:1px solid rgba(0,255,204,0.08);
+      backdrop-filter:blur(6px);
+      transition: all .35s ease;
+      box-shadow:0 0 0 rgba(0,0,0,0);
+    }
+    nav.scrolled{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,255,204,0.06);background:rgba(0,8,6,0.85)}
+    nav ul{display:flex;gap:28px;justify-content:center;list-style:none;padding:14px 12px}
+    nav a{color:#00ffcc;text-decoration:none;font-weight:700;padding:6px 12px;border-radius:8px;transition:all .25s; font-size:1rem}
+    nav a:hover, nav a.active{background:linear-gradient(90deg,#00ffcc,#00ff00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;box-shadow:0 0 12px #00ffcc}
+
+    /* Welcome header with zoom + glow */
+    .hero{
+      text-align:center;
+      padding:36px 12px 10px;
+      position:relative;
+      z-index:10;
+      pointer-events:none;
+    }
+    .hero h1{
+      font-size:2.4rem;
+      letter-spacing:2px;
+      font-weight:800;
+      margin-bottom:8px;
+      background:linear-gradient(90deg,#00ffd1,#00ff7a,#00e6ff);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      text-shadow:0 0 18px rgba(0,255,204,0.14);
+      display:inline-block;
+      transform-origin:center;
+      animation:heroZoom 6s ease-in-out infinite;
+      user-select:none;
+    }
+    @keyframes heroZoom{
+      0%{transform:scale(1);filter:blur(0px)}
+      50%{transform:scale(1.03);filter:blur(0.3px);text-shadow:0 0 30px rgba(0,255,204,0.22)}
+      100%{transform:scale(1);filter:blur(0px)}
+    }
+    .subtitle{color:#8fffe6cc;margin-top:6px;font-weight:600;pointer-events:auto}
+
+    /* Main header */
+    header{
+      text-align:center;font-size:3rem;margin:6px 10px 22px;font-weight:700;
+      background:linear-gradient(90deg,#00ffcc,#00ff00);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:3px;text-shadow:0 0 20px #00ffcc;user-select:none;z-index:10;
+    }
+
+    /* Sections */
+    section{
+      text-align:center;padding:60px 16px;position:relative;z-index:10;max-width:980px;margin:0 auto 60px auto;opacity:0;transform:translateY(18px);transition:opacity .6s ease, transform .6s ease;
+    }
+    section.visible{opacity:1;transform:none}
+    h2{font-size:2rem;margin-bottom:18px;background:linear-gradient(90deg,#00ffff,#00ff00,#00ffff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;user-select:none}
+    p,li{font-size:1.05rem;color:#a0fff0cc;line-height:1.7}
+    ul{list-style:none;padding-left:0;margin-top:10px}
+    li{padding:7px 0}
+
+    /* Services */
+    #serviceList li{margin-bottom:14px}
+    .service-btn{width:100%;text-align:left;background:linear-gradient(90deg,#00ffcc,#00ff00);border:none;padding:12px 20px;font-size:1.05rem;color:#000;cursor:pointer;border-radius:8px;box-shadow:0 0 15px #00ffcc;transition:background .25s}
+    .service-btn:hover{background:linear-gradient(90deg,#00ff00,#00cc99)}
+    .service-detail{max-height:0;overflow:hidden;transition:max-height .5s ease,padding .5s ease;background:rgba(0,30,20,0.75);border-radius:0 0 10px 10px;margin-top:-5px;padding:0 20px}
+    .service-detail.open{max-height:200px;padding:15px 20px}
+
+    .telegram-btn{display:inline-block;margin-top:12px;padding:9px 18px;background:#0088cc;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;box-shadow:0 0 10px #00aaff;transition:all .25s}
+    .telegram-btn:hover{background:#005577;box-shadow:0 0 20px #00ccff}
+
+    /* Contact card */
+    .contact{background:rgba(0,30,20,0.85);box-shadow:0 0 25px #00ffcc;border-radius:15px;width:320px;margin:0 auto;padding:22px 18px}
+    .contact a{color:#00ffff;display:block;margin:12px 0;font-weight:700;text-decoration:none;border-bottom:1px solid transparent;transition:.25s}
+    .contact a:hover{color:#00ff00;text-shadow:0 0 15px #00ff00;border-bottom:1px solid #00ff00;transform:scale(1.02)}
+
+    .app-logo{width:110px;margin:12px auto;display:block}
+
+    /* Login form */
+    .login-wrap{max-width:420px;margin:26px auto 80px;background:linear-gradient(180deg, rgba(0,10,8,0.65), rgba(0,15,12,0.75));padding:18px;border-radius:12px;box-shadow:0 8px 40px rgba(0,255,204,0.06);border:1px solid rgba(0,255,204,0.06)}
+    .login-wrap h3{font-size:1.25rem;margin-bottom:10px;color:#e6fff9}
+    .form-group{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;text-align:left}
+    label{color:#9fffe6;font-weight:700;font-size:0.95rem}
+    input[type="text"], input[type="password"]{
+      background:rgba(0,0,0,0.55);border:1px solid rgba(0,255,204,0.06);padding:12px 14px;border-radius:8px;color:#dffef5;font-size:1rem;outline:none;transition:box-shadow .2s, border-color .2s
+    }
+    input:focus{box-shadow:0 8px 30px rgba(0,255,204,0.06);border-color:rgba(0,255,204,0.18)}
+    .row{display:flex;gap:8px;align-items:center}
+    .toggle-pass{background:transparent;border:none;color:#9fffe6;font-weight:700;cursor:pointer;padding:8px;border-radius:6px}
+    .login-btn{width:100%;padding:12px;font-weight:800;background:linear-gradient(90deg,#00ffcc,#00ff00);border:none;border-radius:10px;cursor:pointer;color:#000;box-shadow:0 8px 30px rgba(0,255,204,0.08);transition:transform .15s}
+    .login-btn:active{transform:translateY(2px)}
+    .msg{margin-top:8px;font-weight:700;min-height:22px}
+    .msg.error{color:#ff6b6b}
+    .msg.success{color:#b7ffca}
+
+    /* Responsive */
+    @media (max-width:640px){
+      header{font-size:2.2rem}
+      .hero h1{font-size:1.6rem}
+      nav ul{gap:14px;padding:10px}
+      .login-wrap{margin:20px;padding:14px}
+    }
+
+    /* subtle shimmer on buttons */
+    .glow {
+      position:relative;
+      overflow:hidden;
+    }
+    .glow::after{
+      content:"";position:absolute;left:-50%;top:0;width:60%;height:100%;transform:skewX(-20deg);background:linear-gradient(90deg,rgba(255,255,255,0.05),rgba(255,255,255,0.15),rgba(255,255,255,0.05));transition:all .8s;
+    }
+    .glow:hover::after{left:120%}
+  </style>
+</head>
+<body>
+
+  <canvas id="matrix"></canvas>
+
+  <nav id="mainNav">
+    <ul>
+      <li><a href="#about" class="nav-link active">About</a></li>
+      <li><a href="#services" class="nav-link">Services</a></li>
+      <li><a href="#team" class="nav-link">Team</a></li>
+      <li><a href="#contact" class="nav-link">Contact</a></li>
+      <li><a href="#login" class="nav-link">Login</a></li>
+    </ul>
+  </nav>
+
+  <div class="hero">
+    <h1>Welcome MM PARSON</h1>
+    <div class="subtitle">Creative • Modern • Reliable</div>
+  </div>
+
+  <header>MM PARSON</header>
+
+  <section id="about" class="reveal">
+    <h2>About (optional)</h2>
+    <p>We are a full-service digital platform combining modern mobile app development, premium software navigation, social-media tools, and cybersecurity-aware training. Our mission is to make technology accessible, secure, and effective -- keeping user control, data privacy, and legal/ethical boundaries at the forefront.
+Our product team builds customized mobile apps, optimizes performance, and designs user-friendly interfaces; support provides fast technical help and troubleshooting. Premium editing tools and solutions are tailored for professional needs -- always with strong emphasis on ethical use and compliance.
+We believe in ethical practices: our ethical hacking and cybersecurity courses are intended solely to raise awareness and strengthen systems. For customer-focused, transparent services and bespoke solutions, get in touch.
+    
+  </section>
+
+  <section id="services" class="reveal">
+    <h2>Our Services</h2>
+    <ul id="serviceList">
+      <li>
+        <button class="service-btn">Web Design</button>
+        <div class="service-detail">
+          <p>Professional web design to make your brand shine.</p>
+          <a href="https://t.me/mmparson25m" target="_blank" class="telegram-btn">Join Telegram Group</a>
+        </div>
+      </li>
+      <li>
+        <button class="service-btn">Web Development</button>
+        <div class="service-detail">
+          <p>Robust development for all your web needs.</p>
+          <a href="https://t.me/mmparson25m" target="_blank" class="telegram-btn">Join Telegram Group</a>
+        </div>
+      </li>
+      <li>
+        <button class="service-btn">Content Writing</button>
+        <div class="service-detail">
+          <p>Engaging content writing to boost your presence.</p>
+          <a href="https://t.me/mmparson25m" target="_blank" class="telegram-btn">Join Telegram Group</a>
+        </div>
+      </li>
+      <li>
+        <button class="service-btn">Logo & Hacking Course</button>
+        <div class="service-detail">
+          <p>Learn logo designing and ethical hacking from experts.</p>
+          <a href="https://t.me/mmparson25m" target="_blank" class="telegram-btn">Join Telegram Group</a>
+        </div>
+      </li>
+      <li>
+        <button class="service-btn">Premium Mobile App</button>
+        <div class="service-detail">
+          <p>Exclusive app development tailored to your needs.</p>
+          <a href="https://t.me/mmparson25m" target="_blank" class="telegram-btn">Join Telegram Group</a>
+        </div>
+      </li>
+      <li>
+        <button class="service-btn">Branding</button>
+        <div class="service-detail">
+          <p>Creative branding strategies for maximum impact.</p>
+          <a href="https://t.me/mmparson25m" target="_blank" class="telegram-btn">Join Telegram Group</a>
+        </div>
+      </li>
+    </ul>
+  </section>
+
+  <section id="team" class="reveal">
+    <h2>Our Team</h2>
+    <p>Motin Mondol – Founder & Developer</p>
+  </section>
+
+  <section id="contact" class="reveal">
+    <h2>Contact</h2>
+    <div class="contact">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/a/ab/Android_O_Preview_Logo.png" alt="App Logo" class="app-logo" />
+      <a href="mailto:motinmondal55m@email.com">Email: motinmondal55m@email.com</a>
+      <a href="https://t.me/mmparson25m" target="_blank" rel="noopener noreferrer">Telegram: @mmparson25m</a>
+      <a href="https://www.instagram.com/m_o_t_i_n_10k?igsh=MW4wcTk5YXV5dndqcQ==" target="_blank" rel="noopener noreferrer">Instagram: @m_o_t_i_n_10k</a>
+    </div>
+  </section>
+
+  <!-- Login section -->
+  <section id="login" class="reveal">
+    <h2>Login</h2>
+    <div class="login-wrap" role="form" aria-labelledby="loginTitle">
+      <h3 id="loginTitle">Sign in to your account</h3>
+
+      <div class="form-group">
+        <label for="username">Username or Email</label>
+        <input id="username" type="text" placeholder="Enter username or email" autocomplete="username">
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="row">
+          <input id="password" type="password" placeholder="Enter password" autocomplete="current-password" style="flex:1">
+          <button id="togglePass" class="toggle-pass" aria-label="Show password">Show</button>
+        </div>
+      </div>
+
+      <button id="loginBtn" class="login-btn glow">Login</button>
+      <div id="msg" class="msg" aria-live="polite"></div>
+      <div style="margin-top:12px;color:#8fffe6cc;font-size:0.95rem">
+        <strong>Note:</strong> Default client-side demo password is <em>mmparson</em>. (You can change it in the script.)
+      </div>
+    </div>
+  </section>
+
+  <script>
+    /*******************************
+     * Matrix background (with color-shift glow)
+     *******************************/
+    const canvas = document.getElementById('matrix');
+    const ctx = canvas.getContext('2d');
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+
+    const letters = '01ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const fontBase = 16;
+    let fontSize = fontBase;
+    let columns = Math.floor(width / fontSize);
+    let drops = Array(columns).fill(1);
+
+    // color shift parameters
+    let hue = 160;
+
+    function drawMatrix(){
+      // fade background slowly (creates trail)
+      ctx.fillStyle = 'rgba(0,0,0,0.06)';
+      ctx.fillRect(0,0,width,height);
+
+      // color changes over time
+      hue = (hue + 0.2) % 360;
+      ctx.fillStyle = `hsl(${hue} 100% 60%)`;
+      ctx.font = fontSize + 'px monospace';
+
+      for(let i=0;i<drops.length;i++){
+        const text = letters.charAt(Math.floor(Math.random()*letters.length));
+        ctx.fillText(text, i * fontSize, drops[i]*fontSize);
+
+        if(drops[i]*fontSize > height && Math.random() > 0.975) drops[i] = 0;
+        drops[i]++;
+      }
+    }
+    let matrixInterval = setInterval(drawMatrix, 33);
+
+    window.addEventListener('resize', () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+      fontSize = Math.max(fontBase, Math.floor(window.innerWidth / 80));
+      columns = Math.floor(width / fontSize);
+      drops = Array(columns).fill(1);
+    });
+
+    /*******************************
+     * Sticky nav highlight + scroll fade + nav shrink
+     *******************************/
+    const navLinks = document.querySelectorAll('.nav-link');
+    const sections = Array.from(navLinks).map(link => document.querySelector(link.getAttribute('href')));
+    const nav = document.getElementById('mainNav');
+
+    window.addEventListener('scroll', () => {
+      const scrollPos = window.scrollY + window.innerHeight/3;
+
+      // highlight nav
+      sections.forEach((section, i) => {
+        if(!section) return;
+        if(scrollPos >= section.offsetTop && scrollPos < section.offsetTop + section.offsetHeight){
+          navLinks.forEach(l=>l.classList.remove('active'));
+          if(navLinks[i]) navLinks[i].classList.add('active');
+        }
+      });
+
+      // nav scrolled effect
+      if(window.scrollY > 40) nav.classList.add('scrolled'); else nav.classList.remove('scrolled');
+
+      // reveal sections
+      document.querySelectorAll('.reveal').forEach(s => {
+        const rect = s.getBoundingClientRect();
+        if(rect.top < window.innerHeight * 0.85) s.classList.add('visible');
+      });
+    });
+    // initial reveal
+    setTimeout(()=>window.dispatchEvent(new Event('scroll')), 120);
+
+    /*******************************
+     * Services open/close
+     *******************************/
+    document.querySelectorAll('.service-btn').forEach(button=>{
+      button.onclick = () => {
+        const detail = button.nextElementSibling;
+        const isOpen = detail.classList.contains('open');
+        document.querySelectorAll('.service-detail').forEach(d=>d.classList.remove('open'));
+        if(!isOpen) detail.classList.add('open');
+      };
+    });
+
+    /*******************************
+     * Login form logic (client-side demo)
+     *
+     * NOTE: This is only a front-end demo.
+     * For real authentication, use a secure backend.
+     *******************************/
+    (function(){
+      const toggle = document.getElementById('togglePass');
+      const pwd = document.getElementById('password');
+      const loginBtn = document.getElementById('loginBtn');
+      const msg = document.getElementById('msg');
+      const userField = document.getElementById('username');
+
+      // Default demo correct password (change if you like)
+      const DEMO_PASSWORD = 'mmparson';
+
+      toggle.addEventListener('click', (e) => {
+        e.preventDefault();
+        if(pwd.type === 'password'){
+          pwd.type = 'text';
+          toggle.textContent = 'Hide';
+        } else {
+          pwd.type = 'password';
+          toggle.textContent = 'Show';
+        }
+      });
+
+      // Live simple feedback: weak / ok length
+      pwd.addEventListener('input', () => {
+        const v = pwd.value;
+        if(!v) {
+          msg.textContent = '';
+          msg.className = 'msg';
+          return;
+        }
+        if(v.length < 4) {
+          msg.textContent = 'Password too short';
+          msg.className = 'msg error';
+        } else if(v.length < 8) {
+          msg.textContent = 'Password is weak';
+          msg.className = 'msg error';
+        } else {
+          msg.textContent = 'Looks good';
+          msg.className = 'msg success';
+        }
+      });
+
+      loginBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const username = (userField.value || '').trim();
+        const password = (pwd.value || '').trim();
+
+        if(!username || !password){
+          msg.textContent = 'Username ও Password দুইটোই দিতে হবে';
+          msg.className = 'msg error';
+          return;
+        }
+
+        // Demo check: only client-side.
+        if(password === DEMO_PASSWORD){
+          msg.textContent = `Welcome, ${username}! Login successful.`;
+          msg.className = 'msg success';
+          // show a friendly welcome up top (transient)
+          const hero = document.querySelector('.hero h1');
+          if(hero){
+            hero.textContent = `Welcome ${username}`;
+            setTimeout(()=>{ hero.textContent = 'Welcome MM PARSON'; }, 4500);
+          }
+        } else {
+          msg.textContent = 'Password ভুল হয়েছে -- আবার চেক করো';
+          msg.className = 'msg error';
+        }
+      });
+    })();
+
+    /*******************************
+     * Accessibility: keyboard nav for service buttons
+     *******************************/
+    document.querySelectorAll('.service-btn').forEach(b => {
+      b.addEventListener('keyup', (e) => {
+        if(e.key === 'Enter' || e.key === ' ') b.click();
+      });
+    });
+
+    /*******************************
+     * Extra: pause matrix when window not focused (saves CPU)
+     *******************************/
+    window.addEventListener('blur', () => {
+      clearInterval(matrixInterval);
+      matrixInterval = null;
+    });
+    window.addEventListener('focus', () => {
+      if(!matrixInterval) matrixInterval = setInterval(drawMatrix, 33);
+    });
+  </script>
+
+</body>
+</html>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>MM PARSON</title>
+<style>
+  body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: radial-gradient(circle at top left, #001f1f, #000);
+    color: #fff;
+    overflow-x: hidden;
+  }
+
+  /* ===== Navbar ===== */
+  nav {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 100;
+    background: rgba(0, 10, 8, 0.8);
+    border-bottom: 1px solid rgba(0,255,204,0.1);
+    backdrop-filter: blur(8px);
+  }
+
+  nav ul {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 12px 0;
+  }
+
+  nav a {
+    color: #00ffcc;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 8px 14px;
+    border-radius: 10px;
+    transition: 0.3s;
+    white-space: nowrap;
+  }
+
+  nav a:hover {
+    background: rgba(0,255,204,0.2);
+  }
+
+  /* 🔥 Click glow animation */
+  .glow {
+    animation: glowColor 1.5s ease-out forwards;
+  }
+
+  @keyframes glowColor {
+    0% {
+      box-shadow: 0 0 5px #00ffcc, 0 0 10px #00ffff;
+      background: #00ffcc;
+      color: #000;
+    }
+    25% {
+      box-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff;
+      background: #ff00ff;
+      color: #fff;
+    }
+    50% {
+      box-shadow: 0 0 15px #00ff00, 0 0 25px #00ff00;
+      background: #00ff00;
+      color: #000;
+    }
+    75% {
+      box-shadow: 0 0 20px #ffff00, 0 0 30px #ffff00;
+      background: #ffff00;
+      color: #000;
+    }
+    100% {
+      box-shadow: none;
+      background: transparent;
+      color: #00ffcc;
+    }
+  }
+
+  /* ===== Header Animation ===== */
+  header {
+    text-align: center;
+    margin-top: 120px;
+    font-size: 3rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    background: linear-gradient(90deg,#00ffcc,#00ffff,#00ff99);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    opacity: 0;
+    transform: scale(0.8);
+    animation: titleAppear 2.5s ease-out forwards;
+  }
+
+  @keyframes titleAppear {
+    0% { opacity: 0; transform: scale(0.6) rotate(-10deg); filter: blur(5px); }
+    50% { opacity: 1; transform: scale(1.1); filter: blur(0); }
+    100% { opacity: 1; transform: scale(1); filter: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== Navbar ===== -->
+<nav>
+  <ul>
+    <li><a href="#about" class="nav-link">About</a></li>
+    <li><a href="#services" class="nav-link">Services</a></li>
+    <li><a href="#team" class="nav-link">Team</a></li>
+    <li><a href="#contact" class="nav-link">Contact</a></li>
+    <li><a href="#login" class="nav-link">Login</a></li>
+  </ul>
+</nav>
+
+<!-- ===== Animated Header ===== -->
+<header>MM PARSON</header>
+
+<script>
+  // Glow animation on navbar click
+  document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+      link.classList.add('glow');
+      setTimeout(() => { link.classList.remove('glow'); }, 1500);
+    });
+  });
+</script>
+
+</body>
+</html>
